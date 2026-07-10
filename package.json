@@ -21,7 +21,6 @@
 	},
 	"license": "MIT",
 	"author": "Manishmg3994",
-	"main": "dist/code.js",
 	"scripts": {
 		"cleanup": "node cleanup.js",
 		"typecheck": "tsc --noEmit",
