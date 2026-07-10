@@ -1,0 +1,45 @@
+{
+	"name": "backend",
+	"type": "module",
+	"version": "1.0.0",
+	"description": "the full antinna full backend for blogger",
+	"keywords": [
+		"appscript",
+		"backend",
+		"api",
+		"map",
+		"notification",
+		"firebase"
+	],
+	"homepage": "https://github.com/mg3994/antinna_backend#readme",
+	"bugs": {
+		"url": "https://github.com/mg3994/antinna_backend/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/mg3994/antinna_backend.git"
+	},
+	"license": "MIT",
+	"author": "Manishmg3994",
+	"main": "dist/code.js",
+	"scripts": {
+		"build": "tsc",
+		"typecheck": "tsc --noEmit",
+
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"cleanup": "node cleanup.js",
+		"push": "clasp push",
+		"build:dev": "tsc --noEmit && esbuild src/main.ts --bundle --format=iife --outfile=dist/code.js",
+		"build:prod": "tsc --noEmit && esbuild src/main.ts --bundle --minify --format=iife --outfile=dist/code.js",
+		"dev": "tsc --noEmit && esbuild src/main.ts --bundle --format=iife --watch --outfile=dist/code.js && npm cleanup"
+	},
+	"devDependencies": {
+		"@types/google-apps-script": "^1.0.83",
+		"@google/clasp": "^2.5.0",
+		"esbuild": "^0.24.0",
+		"typescript": "^7.0.0"
+	},
+	"dependencies": {
+		"@antinna/schema-ld-types": "^1.0.0"
+	}
+}
