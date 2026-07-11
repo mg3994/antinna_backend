@@ -70,10 +70,34 @@ async function runTests() {
 
   // --- 3. Security & JWT Validation ---
   try {
-    // Valid base64 web safe header: {"alg":"RS256","typ":"JWT","kid":"mock-kid"}
-    const headerB64 = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1vY2sta2lkIn0';
-    // Valid base64 web safe payload: {"iss":"https://securetoken.google.com/mock-project-id","aud":"mock-project-id","exp":9999999999,"sub":"mock_firebase_user_123"}
-    const payloadB64 = 'eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vbW9jay1wcm9qZWN0LWlkIiwiYXVkIjoibW9jay1wcm9qZWN0LWlkIiwiZXhwIjo5OTk5OTk5OTk5LCJzdWIiOiJtb2NrX2ZpcmViYXNlX3VzZXJfMTIzIn0';
+    // Generate valid Firebase claims mock matching rotiride/manish structure
+    const header = { alg: "RS256", typ: "JWT", kid: "mock-kid" };
+    const payload = {
+      iss: "https://securetoken.google.com/mock-project-id",
+      aud: "mock-project-id",
+      sub: "mock_firebase_user_123",
+      iat: 1771234480,
+      exp: 9999999999,
+      auth_time: 1771234480,
+      user_id: "mock_firebase_user_123",
+      provider_id: null,
+      name: "Manish Gautam",
+      picture: "https://lh3.googleusercontent.com/a/ACg8ocKhwvi-XWb2uxuqRIrfUX7lLPWFt6ddpSzMD5j5_FKDodRj6w=s96-c",
+      email: "manishgautammg7@gmail.com",
+      email_verified: true,
+      firebase: {
+        identities: {
+          email: ["manishgautammg7@gmail.com"],
+          "google.com": ["113681971281438025355"],
+          phone: ["+919729323674"]
+        },
+        sign_in_provider: "google.com"
+      },
+      phone_number: "+919729323674"
+    };
+
+    const headerB64 = Utilities.base64EncodeWebSafe(JSON.stringify(header));
+    const payloadB64 = Utilities.base64EncodeWebSafe(JSON.stringify(payload));
     const mockToken = `${headerB64}.${payloadB64}.signature`;
 
     const isVerified = JwtHelper.verifyFirebaseToken(mockToken, 'mock-project-id');

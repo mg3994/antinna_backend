@@ -1,26 +1,44 @@
-export interface DecodedJwt<T = any> {
+export interface FirebaseIdentities {
+  email?: string[];
+  'google.com'?: string[];
+  phone?: string[];
+}
+
+export interface FirebaseClaimInfo {
+  identities?: FirebaseIdentities;
+  sign_in_provider?: string;
+}
+
+export interface FirebaseClaims {
+  iss: string;
+  aud: string;
+  sub: string;
+  iat: number;
+  exp: number;
+  auth_time: number;
+  user_id: string;
+  provider_id: string | null;
+  name?: string;
+  picture?: string;
+  email?: string;
+  email_verified?: boolean;
+  firebase?: FirebaseClaimInfo;
+  phone_number?: string;
+  [key: string]: any;
+}
+
+export interface DecodedJwt<T = FirebaseClaims> {
   header: {
     alg: string;
     kid?: string;
     typ: string;
   };
-  payload: T & {
-    iss: string;
-    aud: string;
-    exp: number;
-    sub: string;
-    auth_time?: number;
-    user_id?: string;
-    name?: string;
-    picture?: string;
-    email?: string;
-    email_verified?: boolean;
-  };
+  payload: T;
   signature: string;
 }
 
 export class JwtHelper {
-  public static decode<T = any>(token: string): DecodedJwt<T> {
+  public static decode<T = FirebaseClaims>(token: string): DecodedJwt<T> {
     const parts = token.split('.');
     if (parts.length !== 3) {
       throw new Error('Invalid JWT format');
@@ -44,16 +62,19 @@ export class JwtHelper {
   public static verifyFirebaseToken(token: string, firebaseProjectId: string): boolean {
     try {
       // 1. Pre-validate locally to filter expired or malicious tokens
-      const decoded = this.decode(token);
+      const decoded = this.decode<FirebaseClaims>(token);
       const now = Math.floor(Date.now() / 1000);
 
-      if (decoded.payload.exp < now) {
+      // Support cases where claims might be nested under decoded.payload.claims or directly on decoded.payload
+      const claims: FirebaseClaims = (decoded.payload as any).claims || decoded.payload;
+
+      if (claims.exp < now) {
         return false; // Expired
       }
-      if (decoded.payload.iss !== `https://securetoken.google.com/${firebaseProjectId}`) {
+      if (claims.iss !== `https://securetoken.google.com/${firebaseProjectId}`) {
         return false; // Invalid issuer
       }
-      if (decoded.payload.aud !== firebaseProjectId) {
+      if (claims.aud !== firebaseProjectId) {
         return false; // Invalid audience
       }
 
@@ -67,7 +88,7 @@ export class JwtHelper {
 
       const info = JSON.parse(response.getContentText());
       // Double check sub/uid matching
-      return info.sub === decoded.payload.sub;
+      return info.sub === claims.sub;
     } catch {
       return false;
     }
