@@ -2,10 +2,27 @@ import { BackendSchemaExtractor } from '../json/extractor';
 import { ValidationError } from '../exceptions/validation_error';
 import { StringUtils } from '../utils/strings';
 
+/**
+ * Handler responsible for verifying a client-submitted Order against the authentic Blogger-hosted product data.
+ *
+ * In e-commerce architectures where Blogger serves as the "database-less" CMS, this class serves as the final,
+ * immutable source of truth checking mechanism on the backend to prevent malicious users from tampering with
+ * prices, currencies, stock statuses, or option ranges on the client-side.
+ */
 export class OrderVerificationHandler {
   /**
    * Performs deep backend validation of a client's Order payload against live Blogger post JSON-LD.
-   * Throws a ValidationError if any discrepancy is found.
+   *
+   * This method fetches each ordered item's Blogger page URL, extracts the authentic Schema.org JSON-LD,
+   * resolves any selected variants, and verifies that:
+   * 1. The price and currency match the official Blogger page exactly.
+   * 2. The item is not Out Of Stock or Sold Out.
+   * 3. The quantities ordered respect both minimum and maximum limits (including inventory limits).
+   * 4. Any ordered parent-linked add-ons (gift wrap, customizations, accessories) are authentic, priced
+   *    correctly, and their quantity conforms to parent scaling constraints.
+   *
+   * @param order The client-submitted Order object representing the cart.
+   * @throws {ValidationError} If any price discrepancy, limit violation, or inventory mismatch is found.
    */
   public static verifyOrder(order: any): void {
     const errors: Record<string, string[]> = {};
