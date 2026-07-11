@@ -5,6 +5,7 @@ const distPath = path.resolve("dist");
 const keepFile = "appsscript.json";
 
 try {
+	await fs.mkdir(distPath, { recursive: true });
 	const entries = await fs.readdir(distPath, { withFileTypes: true });
 
 	for (const entry of entries) {
