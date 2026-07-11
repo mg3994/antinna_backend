@@ -77,6 +77,12 @@ class MockSheet {
   public deleteRow(rowPosition: number): void {
     this.values.splice(rowPosition - 1, 1);
   }
+  public getProtect(): any {
+    return {
+      setDescription: () => {},
+      setWarningOnly: () => {}
+    };
+  }
 }
 
 class MockSpreadsheet {
@@ -257,6 +263,23 @@ export function setupGlobalMocks(): void {
     },
     DigestAlgorithm: {
       SHA_256: 'SHA_256'
+    }
+  };
+
+  g.ScriptApp = {
+    getProjectTriggers: () => [],
+    deleteTrigger: () => {},
+    newTrigger: () => ({
+      timeBased: () => ({
+        everyMinutes: () => ({ create: () => {} }),
+        everyHours: () => ({ create: () => {} }),
+        everyDays: () => ({ atHour: () => ({ create: () => {} }) }),
+        everyWeeks: () => ({ onWeekDay: () => ({ atHour: () => ({ create: () => {} }) }) }),
+        onMonthDay: () => ({ atHour: () => ({ create: () => {} }) })
+      })
+    }),
+    WeekDay: {
+      MONDAY: 'MONDAY'
     }
   };
 }

@@ -8,6 +8,7 @@ import { SpreadsheetRepository } from '../repositories/repository';
 import { JwtHelper } from '../security/jwt';
 import { OrderVerificationHandler } from '../handler/request_handler';
 import { ValidationError } from '../exceptions/validation_error';
+import { MonthlyGSTJob } from '../jobs/monthly_gst_job';
 
 async function runTests() {
   console.log('========================================');
@@ -205,6 +206,50 @@ async function runTests() {
 
   } catch (err: any) {
     assert(false, 'Schema Extraction & Verification Tests', err.message);
+  }
+
+  // --- 6. GST Compliance Scheduled Job Tests ---
+  try {
+    const db = new SpreadsheetDatabase();
+    interface OrderRecord {
+      id: string;
+      buyerEmail: string;
+      totalPrice: number;
+      priceCurrency: string;
+      status: string;
+      createdAt: string;
+    }
+    const repo = new SpreadsheetRepository<OrderRecord>(db, 'Orders');
+
+    // Seed mock Orders (Sales and Returns) for current month
+    const curISO = new Date().toISOString();
+    repo.create({ id: 'ord_sale_1', buyerEmail: 'buyer1@example.com', totalPrice: 10000, priceCurrency: 'INR', status: 'COMPLETED', createdAt: curISO });
+    repo.create({ id: 'ord_sale_2', buyerEmail: 'buyer2@example.com', totalPrice: 5000, priceCurrency: 'INR', status: 'COMPLETED', createdAt: curISO });
+    repo.create({ id: 'ord_return_1', buyerEmail: 'buyer1@example.com', totalPrice: 2000, priceCurrency: 'INR', status: 'RETURNED', createdAt: curISO });
+
+    // Execute the compliance job
+    const gstJob = new MonthlyGSTJob();
+    gstJob.execute();
+
+    // Verify compliance sheet was created and holds correct audit figures
+    const monthStr = String(new Date().getMonth() + 1).padStart(2, '0');
+    const tabName = `GST_${new Date().getFullYear()}_${monthStr}`;
+    const gstTable = db.getTable<any>(tabName);
+    const rows = gstTable.getHeaders(); // Fetch headers to verify columns
+
+    assert(rows.length > 0, 'GST compliance: Created Monthly GST compliance Sheet tab successfully');
+
+    // Read the values to ensure sales (15000), returns (2000), net (13000) and GST liability (2340) are written correctly
+    const sheetData = gstTable.getAll().map(row => row.data);
+
+    // Find Summary Values in row data
+    const summaryValues = sheetData.map(row => Object.values(row)[0]);
+    assert(summaryValues.includes('GST COMPLIANCE AUDIT REPORT'), 'GST compliance: Includes standard audit report header');
+    assert(summaryValues.includes('GST SUMMARY BREAKDOWN'), 'GST compliance: Includes compliance summary breakdown');
+    assert(summaryValues.includes('TRANSACTION LEDGER'), 'GST compliance: Includes comprehensive ledger log for audit trail');
+
+  } catch (err: any) {
+    assert(false, 'GST Compliance Job Tests', err.message);
   }
 
   console.log('\n========================================');
