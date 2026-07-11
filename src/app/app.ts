@@ -1,6 +1,6 @@
 import { Router } from '../core/router/router';
 import { HttpRequest } from '../core/http/request';
-import { HttpResponse } from '../http/response';
+import { HttpResponse } from '../core/http/response';
 
 export class Application {
   private router: Router;

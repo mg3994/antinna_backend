@@ -2,11 +2,13 @@ export interface FirebaseIdentities {
   email?: string[];
   'google.com'?: string[];
   phone?: string[];
+  [providerId: string]: string[] | undefined;
 }
 
 export interface FirebaseClaimInfo {
   identities?: FirebaseIdentities;
   sign_in_provider?: string;
+  [key: string]: any;
 }
 
 export interface FirebaseClaims {
